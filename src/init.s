@@ -1,5 +1,7 @@
+# a0
 .equ AT_FDCWD,         -100
 
+# a7
 .equ SYS_MKDIRAT,      34
 .equ SYS_OPENAT,       56
 .equ SYS_CLOSE,        57
@@ -8,6 +10,7 @@
 .equ SYS_WRITE,        64
 .equ SYS_EXIT,         93
 
+# a0/a2
 .equ O_RDONLY,         0
 .equ O_WRONLY,         1
 .equ O_CREAT,          64
