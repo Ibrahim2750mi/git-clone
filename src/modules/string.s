@@ -60,3 +60,32 @@ strcpy:
         j strcpy_copy
     strcpy_done:
         ret          # Return destination pointer in a0
+
+.global buffercmpr
+
+buffercmpr:
+    # compares two strings in same buffer, of equal size
+    # a0 = buffer
+    # a2 = buffer size
+    # Returns: a0 = 0 if buffers are equal, non-zero otherwise
+    beqz a2, buffercmpr_equal
+
+    sub t0, a0, a2
+    sub t1, t0, a2
+
+    mv t2, a2
+
+    buffercmpr_loop:
+        lbu t3, 0(t0)
+        lbu t4, 0(t1)
+        bne t3, t4, buffercmpr_not_equal
+        addi t0, t0, 1
+        addi t1, t1, 1
+        addi t2, t2, -1
+        bnez t2, buffercmpr_loop
+    buffercmpr_equal:
+        li a0, 0
+        ret
+    buffercmpr_not_equal:
+        li a0, 1
+        ret
