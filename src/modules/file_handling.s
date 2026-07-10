@@ -1,3 +1,5 @@
+.include "modules/constants.s"
+
 .global readfile
 
 readfile:
@@ -5,11 +7,13 @@ readfile:
     # a1 = buffer
     # a2 = buffer size
     # Returns: a0 = number of bytes read or negative error code
-    beqz a2, readfile_error
+    # Returns: a1 = buffer (unchanged)
 
     mv t0, a0  # Save pathname
     mv t1, a1  # Save buffer pointer
     mv t2, a2  # Save buffer size
+
+    beqz a2, readfile_error
 
     li a0, AT_FDCWD
     mv a1, t0  # pathname
@@ -37,6 +41,8 @@ readfile:
         j readfile_done
     readfile_done:
         mv a0, t5  # Return number of bytes read
+        mv a2, t2  # Restore buffer size
         ret
     readfile_error:
+        mv a2, t2  # Restore buffer size
         ret
