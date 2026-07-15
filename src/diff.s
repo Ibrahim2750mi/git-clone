@@ -26,7 +26,7 @@ buffer:
 
 _start:
     la a1, buffer
-    mv a2, BUFFER_SIZE
+    li a2, BUFFER_SIZE
 
 
 
@@ -51,7 +51,7 @@ recursedir:
     mv s3, a0  # Save the opened directory file descriptor
 
     la a1, s1  # buffer for file contents
-    li a2, s2  # buffer size
+    la a2, s2  # buffer size
     li a7, SYS_GETDENTS64
     ecall
     bltz a0, recursedir_close_dir
@@ -66,7 +66,7 @@ recursedir:
     l1:
         add s0, s5, s0
 
-    recurseddir_process_file:
+    recursedir_process_file:
         # Process the regular file
         addi s4, s0, 19  # Move to the d_name field
         call diff  # Call the diff function to compare the file
