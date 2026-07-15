@@ -22,6 +22,7 @@
 .equ DT_DIR,           4
 .equ DT_REG,           8
 .equ EEXIST,           17
+.equ ENOENT,           2
 .equ EIO,              5
 
 .equ BUFFER_SIZE,      4096
