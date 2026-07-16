@@ -4,10 +4,15 @@
 .section .rodata
 currentdir:      .asciz "."
 parentdir:       .asciz ".gitrv/parent/"
+gitrvdir:        .asciz ".gitrv/"
+zero_string:     .asciz "0"
 slash:           .asciz "/"
 new_string:      .asciz "new: "
 modified_string: .asciz "modified: "
 newline:         .asciz "\n"
+
+.section .bss
+comparebase:     .space 4096
 
 .section .text
 .global _start
@@ -15,6 +20,32 @@ newline:         .asciz "\n"
 .global diff
 
 _start:
+    ld t0, 0(sp)                 # argc
+    li t1, 2
+    blt t0, t1, use_parent_base
+
+    ld t0, 16(sp)                # argv[1]
+    lbu t1, 0(t0)
+    li t2, '0'
+    bne t1, t2, use_commit_base
+    lbu t1, 1(t0)
+    bnez t1, use_commit_base
+use_parent_base:
+    la a0, comparebase
+    la a1, parentdir
+    call strcpy
+    j start_diff
+
+use_commit_base:
+    la a0, comparebase
+    la a1, gitrvdir
+    call strcpy
+    ld a1, 16(sp)                # argv[1]
+    call strcat
+    la a1, slash
+    call strcat
+
+start_diff:
     la a0, currentdir
     call recursedir
     bltz a0, exit_failure
@@ -160,7 +191,7 @@ recursedir_restore:
     ret
 
 # diff(a0 = current-file path)
-# Builds .gitrv/parent/<current-file path>, then reports new/modified files.
+# Builds <selected-base>/<current-file path>, then reports new/modified files.
 diff:
     addi sp, sp, -80
     sd ra, 72(sp)
@@ -176,7 +207,7 @@ diff:
     sub sp, sp, t0
     mv s1, sp                    # snapshot pathname
     mv a0, s1
-    la a1, parentdir
+    la a1, comparebase
     call strcpy
     mv a1, s0
     call strcat
