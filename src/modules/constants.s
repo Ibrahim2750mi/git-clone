@@ -4,6 +4,7 @@
 
 # a7
 .equ SYS_MKDIRAT,      34
+.equ SYS_UNLINKAT,     35
 .equ SYS_OPENAT,       56
 .equ SYS_CLOSE,        57
 .equ SYS_GETDENTS64,   61
@@ -20,6 +21,8 @@
 .equ O_APPEND,         1024
 .equ O_DIRECTORY,      65536
 .equ O_NOFOLLOW,       131072
+
+.equ AT_REMOVEDIR,     512
 
 .equ DT_DIR,           4
 .equ DT_REG,           8

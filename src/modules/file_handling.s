@@ -158,3 +158,161 @@ countlines_restore:
     li t6, 4112
     add sp, sp, t6
     ret
+
+.global clean_directory
+clean_directory:
+    # a0 = directory pathname
+    # Removes every entry below it except a directory named ".gitrv".
+    # Returns: a0 = 0 on success, or a negative Linux error code.
+    addi sp, sp, -32
+    sd ra, 24(sp)
+    sd s0, 16(sp)
+    sd s1, 8(sp)
+    mv s0, a0
+    li a0, AT_FDCWD
+    mv a1, s0
+    li a2, O_DIRECTORY | O_NOFOLLOW
+    li a7, SYS_OPENAT
+    ecall
+    bltz a0, clean_directory_restore
+    mv s1, a0
+    mv a0, s1
+    call clean_directory_fd
+    mv s0, a0
+    mv a0, s1
+    li a7, SYS_CLOSE
+    ecall
+    mv a0, s0
+clean_directory_restore:
+    ld s1, 8(sp)
+    ld s0, 16(sp)
+    ld ra, 24(sp)
+    addi sp, sp, 32
+    ret
+
+# clean_directory_fd(a0 = directory fd)
+clean_directory_fd:
+    addi sp, sp, -96
+    sd ra, 88(sp)
+    sd s0, 80(sp)
+    sd s1, 72(sp)
+    sd s2, 64(sp)
+    sd s3, 56(sp)
+    sd s4, 48(sp)
+    sd s5, 40(sp)
+    sd s6, 32(sp)
+    sd s7, 24(sp)
+    mv s0, a0
+    li s6, 0
+    li t0, BUFFER_SIZE
+    sub sp, sp, t0
+    mv s1, sp
+
+clean_directory_read:
+    mv a0, s0
+    mv a1, s1
+    li a2, BUFFER_SIZE
+    li a7, SYS_GETDENTS64
+    ecall
+    bltz a0, clean_directory_error
+    beqz a0, clean_directory_done
+    mv s2, s1
+    add s3, s1, a0
+clean_directory_entry:
+    bgeu s2, s3, clean_directory_read
+    lhu t0, 16(s2)
+    beqz t0, clean_directory_bad_entry
+    add t1, s2, t0
+    bgtu t1, s3, clean_directory_bad_entry
+    lbu s5, 18(s2)
+    addi s4, s2, 19
+    mv s2, t1
+
+    # Skip . and ..
+    lbu t0, 0(s4)
+    li t1, '.'
+    bne t0, t1, clean_directory_type
+    lbu t0, 1(s4)
+    beqz t0, clean_directory_entry
+    bne t0, t1, clean_directory_type
+    lbu t0, 2(s4)
+    beqz t0, clean_directory_entry
+
+clean_directory_type:
+    li t0, DT_DIR
+    bne s5, t0, clean_directory_unlink_file
+    # Preserve the repository data directory.
+    lbu t0, 0(s4)
+    li t1, '.'
+    bne t0, t1, clean_directory_open_child
+    lbu t0, 1(s4)
+    li t1, 'g'
+    bne t0, t1, clean_directory_open_child
+    lbu t0, 2(s4)
+    li t1, 'i'
+    bne t0, t1, clean_directory_open_child
+    lbu t0, 3(s4)
+    li t1, 't'
+    bne t0, t1, clean_directory_open_child
+    lbu t0, 4(s4)
+    li t1, 'r'
+    bne t0, t1, clean_directory_open_child
+    lbu t0, 5(s4)
+    li t1, 'v'
+    bne t0, t1, clean_directory_open_child
+    lbu t0, 6(s4)
+    beqz t0, clean_directory_entry
+
+clean_directory_open_child:
+    mv a0, s0
+    mv a1, s4
+    li a2, O_DIRECTORY | O_NOFOLLOW
+    li a7, SYS_OPENAT
+    ecall
+    bltz a0, clean_directory_error
+    mv s7, a0
+    mv a0, s7
+    call clean_directory_fd
+    mv s6, a0
+    mv a0, s7
+    li a7, SYS_CLOSE
+    ecall
+    bltz s6, clean_directory_done
+    mv a0, s0
+    mv a1, s4
+    li a2, AT_REMOVEDIR
+    li a7, SYS_UNLINKAT
+    ecall
+    bltz a0, clean_directory_error
+    j clean_directory_entry
+
+clean_directory_unlink_file:
+    mv a0, s0
+    mv a1, s4
+    li a2, 0
+    li a7, SYS_UNLINKAT
+    ecall
+    bltz a0, clean_directory_error
+    j clean_directory_entry
+
+clean_directory_bad_entry:
+    li s6, EIO
+    neg s6, s6
+    j clean_directory_done
+clean_directory_error:
+    mv s6, a0
+clean_directory_done:
+    mv a0, s6
+    li t0, BUFFER_SIZE
+    add sp, sp, t0
+    ld s7, 24(sp)
+    ld s6, 32(sp)
+    ld s5, 40(sp)
+    ld s4, 48(sp)
+    ld s3, 56(sp)
+    ld s2, 64(sp)
+    ld s1, 72(sp)
+    ld s0, 80(sp)
+    ld ra, 88(sp)
+    addi sp, sp, 96
+    ret
