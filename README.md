@@ -1,4 +1,4 @@
-# Git-Clone Documentation
+# Git-RV Documentation
 
 This project is a small RISC-V assembly version-control system. Each project directory keeps its own repository data inside `.gitrv`, so version history is local to that directory.
 
