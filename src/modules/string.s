@@ -118,3 +118,44 @@ strcmpr_equal:
 strcmpr_not_equal:
     li a0, 1
     ret
+
+.global itoa
+itoa:
+    # a0 = non-negative integer
+    # a1 = destination buffer (at least 21 bytes for a 64-bit value)
+    # Returns: a0 = destination buffer
+    mv t0, a1                  # preserve destination / reversal start
+    mv t1, a1                  # next output byte
+    bnez a0, itoa_digits
+
+    li t2, '0'
+    sb t2, 0(t1)
+    sb zero, 1(t1)
+    mv a0, t0
+    ret
+
+itoa_digits:
+    li t3, 10
+itoa_divide:
+    remu t4, a0, t3
+    addi t4, t4, '0'
+    sb t4, 0(t1)               # digits are initially written backwards
+    addi t1, t1, 1
+    divu a0, a0, t3
+    bnez a0, itoa_divide
+    sb zero, 0(t1)
+
+    addi t2, t1, -1            # last digit
+itoa_reverse:
+    bgeu t0, t2, itoa_done
+    lbu t4, 0(t0)
+    lbu t5, 0(t2)
+    sb t5, 0(t0)
+    sb t4, 0(t2)
+    addi t0, t0, 1
+    addi t2, t2, -1
+    j itoa_reverse
+
+itoa_done:
+    mv a0, a1
+    ret
