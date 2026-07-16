@@ -6,6 +6,8 @@ minus_m:
     .asciz "-m"
 dirname:
     .asciz ".gitrv/"
+dot:
+    .asciz "."
 
 newline:
     .asciz "\n"
@@ -79,7 +81,8 @@ _start:
     bltz a0, commit_failure
 
     # Copy the current working tree into the new commit directory.
-    la a0, commit_dir
+    la a0, dot
+    la a1, commit_dir
     call snapshot_copy
     bltz a0, commit_failure
 

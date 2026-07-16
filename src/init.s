@@ -1,6 +1,7 @@
 .include "modules/constants.s"
 
 .section .rodata
+dot:       .asciz "."
 initdir:   .asciz ".gitrv"
 parentdir: .asciz ".gitrv/parent"
 
@@ -29,7 +30,8 @@ init_parent:
     bne a0, t0, init_failure
 
 init_snapshot:
-    la a0, parentdir
+    la a0, dot
+    la a1, parentdir
     call snapshot_copy
     bltz a0, init_failure
     li a0, 0

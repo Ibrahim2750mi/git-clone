@@ -293,8 +293,8 @@ copy_dir_done:
     ret
 
 
-# snapshot_copy(a0 = existing destination directory path)
-# Copies the working tree into a0, excluding .gitrv.
+# snapshot_copy(a0 = source directory path, a1 = existing destination directory path)
+# Copies a tree while excluding any .gitrv directory encountered in the source.
 .global snapshot_copy
 snapshot_copy:
     addi sp, sp, -32
@@ -303,43 +303,44 @@ snapshot_copy:
     sd s1, 8(sp)
     sd s2, 0(sp)
     mv s0, a0
+    mv s1, a1
 
     li a0, AT_FDCWD
-    la a1, dot
+    mv a1, s0
     li a2, O_DIRECTORY
     li a7, SYS_OPENAT
     ecall
     bltz a0, snapshot_restore
-    mv s1, a0
+    mv s0, a0
 
     li a0, AT_FDCWD
-    mv a1, s0
+    mv a1, s1
     li a2, O_DIRECTORY | O_NOFOLLOW
     li a7, SYS_OPENAT
     ecall
     bltz a0, snapshot_close_source
+    mv s1, a0
+
+    mv a0, s0
+    mv a1, s1
+    call copy_dir
     mv s2, a0
 
-    mv a0, s1
-    mv a1, s2
-    call copy_dir
-    mv s0, a0
-
+    mv a0, s0
+    li a7, SYS_CLOSE
+    ecall
     mv a0, s1
     li a7, SYS_CLOSE
     ecall
     mv a0, s2
-    li a7, SYS_CLOSE
-    ecall
-    mv a0, s0
     j snapshot_restore
 
 snapshot_close_source:
-    mv s0, a0
-    mv a0, s1
+    mv s2, a0
+    mv a0, s0
     li a7, SYS_CLOSE
     ecall
-    mv a0, s0
+    mv a0, s2
 
 snapshot_restore:
     ld s2, 0(sp)
@@ -348,4 +349,3 @@ snapshot_restore:
     ld ra, 24(sp)
     addi sp, sp, 32
     ret
-
