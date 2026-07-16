@@ -46,3 +46,53 @@ readfile:
     readfile_error:
         mv a2, t2  # Restore buffer size
         ret
+
+.global appendfile
+appendfile:
+    # a0 = pathname
+    # a1 = data buffer
+    # a2 = number of bytes to append
+    # Returns: a0 = bytes appended, or a negative Linux error code.
+    mv t0, a0                  # pathname
+    mv t1, a1                  # current data position
+    mv t2, a2                  # bytes still to write
+    mv t3, a2                  # original byte count / return value
+
+    li a0, AT_FDCWD
+    mv a1, t0
+    li a2, O_RDWR | O_CREAT | O_APPEND
+    li a3, 0644
+    li a7, SYS_OPENAT
+    ecall
+    bltz a0, appendfile_done
+    mv t4, a0                  # file descriptor
+
+appendfile_write:
+    beqz t2, appendfile_close
+    mv a0, t4
+    mv a1, t1
+    mv a2, t2
+    li a7, SYS_WRITE
+    ecall
+    blez a0, appendfile_write_error
+    add t1, t1, a0
+    sub t2, t2, a0
+    j appendfile_write
+
+appendfile_write_error:
+    bnez a0, appendfile_save_error
+    li t3, EIO                # a zero-byte write cannot make progress
+    neg t3, t3
+    j appendfile_close
+
+appendfile_save_error:
+    mv t3, a0
+
+appendfile_close:
+    mv a0, t4
+    li a7, SYS_CLOSE
+    ecall
+    mv a0, t3
+
+appendfile_done:
+    ret

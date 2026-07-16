@@ -14,8 +14,10 @@
 # a0/a2
 .equ O_RDONLY,         0
 .equ O_WRONLY,         1
+.equ O_RDWR,           2
 .equ O_CREAT,          64
 .equ O_TRUNC,          512
+.equ O_APPEND,         1024
 .equ O_DIRECTORY,      65536
 .equ O_NOFOLLOW,       131072
 
