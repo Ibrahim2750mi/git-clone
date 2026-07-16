@@ -89,3 +89,32 @@ buffercmpr:
     buffercmpr_not_equal:
         li a0, 1
         ret
+
+.global strcmpr
+strcmpr:
+    # a0 = buffer 1
+    # a1 = buffer 2
+    # a2 = buffer size
+    # Returns: a0 = 0 if buffers are equal, non-zero otherwise
+    beqz a2, strcmpr_equal
+
+    mv t0, a0
+    mv t1, a1
+    mv t2, a2
+
+strcmpr_loop:
+    lbu t3, 0(t0)
+    lbu t4, 0(t1)
+    bne t3, t4, strcmpr_not_equal
+    addi t0, t0, 1
+    addi t1, t1, 1
+    addi t2, t2, -1
+    bnez t2, strcmpr_loop
+
+strcmpr_equal:
+    li a0, 0
+    ret
+
+strcmpr_not_equal:
+    li a0, 1
+    ret
