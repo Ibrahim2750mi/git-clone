@@ -78,7 +78,10 @@ _start:
     ecall
     bltz a0, commit_failure
 
-    # now i wanna call init.s and repeat what it does in the .gitrv/number_of_lines folder, like all the current files of directory to this
+    # Copy the current working tree into the new commit directory.
+    la a0, commit_dir
+    call snapshot_copy
+    bltz a0, commit_failure
 
 
     li a0, 0
