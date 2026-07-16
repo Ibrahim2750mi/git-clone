@@ -12,7 +12,7 @@ dot:
 newline:
     .asciz "\n"
 tab:
-    .asciz "\t"
+    .asciz ".\t"
 
 configfilename:
     .asciz ".gitrv/config"
@@ -46,9 +46,11 @@ _start:
     call strcmpr
     bnez a0, commit_failure
 
+    la a0, commit_buffer
+    la a1, tab
+    call strcpy
     # strcmpr may overwrite temporary registers, so reload argv[2].
     ld t2, 24(sp)
-    la a0, commit_buffer
     mv a1, t2
     call strcpy
     
