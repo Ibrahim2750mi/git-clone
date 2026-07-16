@@ -96,3 +96,65 @@ appendfile_close:
 
 appendfile_done:
     ret
+
+.global countlines
+countlines:
+    # a0 = pathname
+    # Returns: a0 = number of '\n' bytes in the file, or a negative Linux error.
+    li t6, 4112
+    sub sp, sp, t6
+    sd ra, 0(sp)
+    mv t0, a0                  # pathname
+    addi t2, sp, 16            # read buffer
+    li t1, 0                   # line count
+
+    li a0, AT_FDCWD
+    mv a1, t0
+    li a2, O_RDONLY
+    li a7, SYS_OPENAT
+    ecall
+    bltz a0, countlines_restore
+    mv t0, a0                  # file descriptor
+
+countlines_read:
+    mv a0, t0
+    mv a1, t2
+    li a2, BUFFER_SIZE
+    li a7, SYS_READ
+    ecall
+    bltz a0, countlines_close_error
+    beqz a0, countlines_close_success
+
+    mv t3, t2
+    add t4, t2, a0
+countlines_scan:
+    bgeu t3, t4, countlines_read
+    lbu t5, 0(t3)
+    li t6, 10                  # '\n'
+    bne t5, t6, countlines_next
+    addi t1, t1, 1
+countlines_next:
+    addi t3, t3, 1
+    j countlines_scan
+
+countlines_close_success:
+    mv t5, t1
+    mv a0, t0
+    li a7, SYS_CLOSE
+    ecall
+    bltz a0, countlines_restore
+    mv a0, t5
+    j countlines_restore
+
+countlines_close_error:
+    mv t5, a0
+    mv a0, t0
+    li a7, SYS_CLOSE
+    ecall
+    mv a0, t5
+
+countlines_restore:
+    ld ra, 0(sp)
+    li t6, 4112
+    add sp, sp, t6
+    ret
