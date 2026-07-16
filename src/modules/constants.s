@@ -1,6 +1,7 @@
 # a0
 .equ AT_FDCWD,         -100
 .equ STDOUT,           1
+.equ NULL,             0
 
 # a7
 .equ SYS_MKDIRAT,      34
@@ -11,6 +12,7 @@
 .equ SYS_READ,         63
 .equ SYS_WRITE,        64
 .equ SYS_EXIT,         93
+.equ SYS_TIME,         106
 
 # a0/a2
 .equ O_RDONLY,         0

@@ -11,6 +11,8 @@ dot:
 
 newline:
     .asciz "\n"
+tab:
+    .asciz "\t"
 
 configfilename:
     .asciz ".gitrv/config"
@@ -19,6 +21,8 @@ configfilename:
 .align 3
 commit_buffer:
     .space 4096
+time_buffer:
+    .space 128
 commit_dir:
     .space 4096
 number_buffer:
@@ -48,6 +52,23 @@ _start:
     mv a1, t2
     call strcpy
     
+    mv a4, a0
+
+    li a0, NULL
+    li a7, SYS_TIME
+    ecall
+
+    la a1, time_buffer
+    call itoa
+
+    mv a2, a1
+    la a1, tab
+
+    mv a0, a4
+    call strcat
+    mv a1, a2
+    call strcat
+
 
     la a1, newline
     call strcat
